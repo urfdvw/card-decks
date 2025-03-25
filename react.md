@@ -103,3 +103,13 @@ ref
 - delete `package-lock.json`
 - delete `node_modules`
 - `npm i` again
+
+---
+
+## How to make a web app installable
+> progressive, pwa
+
+ref
+- https://web.dev/articles/install-criteria
+- https://web.dev/articles/add-manifest
+- https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tutorials/js13kGames
