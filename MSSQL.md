@@ -185,15 +185,19 @@ SELECT COUNT(*) FROM Employee;       -- 包括所有行
 
 ```sql
 -- https://leetcode.com/problems/delete-duplicate-emails/
-WITH Duplicates AS (
-    SELECT
-        Id,
-        Email,
-        ROW_NUMBER() OVER (PARTITION BY Email ORDER BY Id) AS rn
-    FROM Person
+/* Write your T-SQL query statement below */
+with OrderedPerson as (
+    select
+        id,
+        email,
+        ROW_NUMBER() over(
+            partition by email
+            order by id
+        ) as rownumber
+    from Person
 )
-DELETE FROM Duplicates
-WHERE rn > 1;
+delete from OrderedPerson
+where rownumber > 1
 ```
 
 ---
