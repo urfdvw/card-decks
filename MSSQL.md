@@ -21,6 +21,7 @@ left join Address
 
 -   logics like `and` indent with `on` as no need for another layer
 -   when the logic is clear, instead of using `join ... where`, use `join .. and`
+    - but not with `left join`
 
 ```sql
 -- example of above
@@ -30,6 +31,18 @@ from Employee as Member
 join Employee as Lead
     on Lead.id = Member.managerId
     and Lead.salary < Member.salary
+```
+
+```sql
+-- https://leetcode.com/problems/employee-bonus/
+select
+    Employee.name as name,
+    Bonus.bonus as bonus
+from Employee
+left join Bonus
+    on Bonus.empId = Employee.empId
+where Bonus.bonus < 1000
+    or Bonus.bonus is null
 ```
 
 ---
@@ -137,6 +150,14 @@ SELECT * FROM Person WHERE name = NULL;     -- ❌ 错误
 SELECT * FROM Person WHERE name IS NULL;    -- ✅ 正确
 ```
 
+```sql
+-- https://leetcode.com/problems/find-customer-referee
+select name
+from Customer
+where referee_id is null
+    or referee_id <> 2
+```
+
 ## 🔍 进阶使用场景
 
 ### 1. 排序时将 NULL 放后
@@ -236,4 +257,20 @@ SELECT
         PARTITION BY Department, Year
     ) AS DeptYearTotal
 FROM Employee;
+```
+
+---
+
+# How to find the date of yesterday
+
+`dateadd(day, -1, Today.recordDate)`
+
+```sql
+-- https://leetcode.com/problems/rising-temperature/
+select
+    Today.id as id
+from Weather as Today
+join Weather as Yesterday
+    on Yesterday.recordDate = dateadd(day, -1, Today.recordDate)
+    and Yesterday.temperature < Today.temperature
 ```
