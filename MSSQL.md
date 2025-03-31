@@ -447,3 +447,41 @@ left join AveragePrice
 -- edge case, what if a product never sold? show as 0
 -- only one `with` needed for a chain of cte
 ```
+
+---
+# 1075
+> float, decimal
+
+```sql
+-- https://leetcode.com/problems/project-employees-i
+with ProjectExperience as (
+    select
+        Project.project_id as project_id,
+        Employee.experience_years as experience_years
+    from Project
+    join Employee
+        on Employee.employee_id = Project.employee_id
+)
+select
+    ProjectExperience.project_id as project_id,
+    round(avg(1.0 * ProjectExperience.experience_years), 2) as average_years
+from ProjectExperience
+group by ProjectExperience.project_id
+order by ProjectExperience.project_id
+-- AVG will not auto cast to float
+-- don't forget round
+-- order?
+-- WTF? cast to float is different from 1.0 *
+```
+
+```sql
+-- shorter
+select
+    Project.project_id as project_id,
+    round(avg(1.0 * Employee.experience_years), 2) as average_years
+from Project
+join Employee
+    on Employee.employee_id = Project.employee_id
+group by Project.project_id
+order by Project.project_id
+```
