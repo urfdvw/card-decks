@@ -21,7 +21,7 @@ left join Address
 
 -   logics like `and` indent with `on` as no need for another layer
 -   when the logic is clear, instead of using `join ... where`, use `join .. and`
-    - but not with `left join`
+    -   but not with `left join`
 
 ```sql
 -- example of above
@@ -175,6 +175,28 @@ SELECT COUNT(salary) FROM Employee;  -- 不包括 NULL
 SELECT COUNT(*) FROM Employee;       -- 包括所有行
 ```
 
+> cross join
+
+```sql
+-- https://leetcode.com/problems/students-and-examinations/
+-- TODO：还不是很熟
+select
+    Students.student_id as student_id, -- Students not Examinations: use left of left join
+    Students.student_name as student_name,
+    Subjects.subject_name as subject_name,
+    count(Examinations.student_id) as attended_exams -- count non-null
+from Students
+cross join Subjects
+left join Examinations
+    on Examinations.student_id = Students.student_id
+    and Examinations.subject_name = Subjects.subject_name
+group by
+    Students.student_id, -- left of left join
+    Students.student_name,
+    Subjects.subject_name
+order by student_id, subject_name
+```
+
 ## ✅ 总结：关于 NULL 的操作不止 `IS NULL` 和 `IS NOT NULL`，你可以用：
 
 | 功能            | 示例                                  |
@@ -273,4 +295,155 @@ from Weather as Today
 join Weather as Yesterday
     on Yesterday.recordDate = dateadd(day, -1, Today.recordDate)
     and Yesterday.temperature < Today.temperature
+```
+
+---
+
+# about `group by`
+
+table columns are either in group by or select
+
+```sql
+-- https://leetcode.com/problems/customer-who-visited-but-did-not-make-any-transactions/?envType=study-plan-v2&envId=top-sql-50
+
+select
+    Visits.customer_id as customer_id,
+    count(Visits.visit_id) as count_no_trans
+from Visits
+left join Transactions
+    on Transactions.visit_id = Visits.visit_id
+where transaction_id is null
+group by Visits.customer_id
+```
+
+<!-- other leetcode examples -->
+
+---
+
+# 1661
+
+> cte, average, avg, round
+
+```sql
+-- https://leetcode.com/problems/average-time-of-process-per-machine/
+with Duration as (
+    select
+        ProcessStart.machine_id as machine_id,
+        ProcessEnd.timestamp - ProcessStart.timestamp as length
+    from Activity as ProcessStart
+    join Activity as ProcessEnd
+        on ProcessEnd.machine_id = ProcessStart.machine_id
+        and ProcessEnd.process_id = ProcessStart.process_id
+        and ProcessStart.activity_type = 'start'
+        and ProcessEnd.activity_type = 'end'
+)
+select
+    Duration.machine_id as machine_id,
+    round(avg(Duration.length), 3) as processing_time
+from Duration
+group by Duration.machine_id
+```
+
+---
+
+# 570
+
+> cte, null, count
+
+```sql
+-- https://leetcode.com/problems/managers-with-at-least-5-direct-reports/
+with Relation as (
+    select
+        Lead.name as leadName,
+        Lead.id as leadId,
+        Member.name as memberName
+    from Employee as Lead
+    join Employee as Member
+        on Member.managerId = Lead.id
+)
+select
+    leadName as name
+from Relation
+group by leadId, leadName
+having count(1) >= 5
+
+/**** missed case ****
+- leads have same name but different ids
+    - include id in CTE
+- | 101 | null | A          | null      | ??? WTF is this case ???
+    - instead of counting name, count 1 to include null as a case
+*/
+```
+
+---
+
+# 1934
+
+> rate, iff for conversion, round, left join, coalesce
+
+```sql
+-- https://leetcode.com/problems/confirmation-rate/
+with EventRate as (
+    select
+        user_id as user_id,
+        round(sum(iif(action = 'confirmed', 1.0, 0.0)) / count(1), 2)
+            -- 1.0 to ensure float
+            as confirmation_rate
+    from Confirmations
+    group by user_id
+)
+select
+    Signups.user_id as user_id,
+    coalesce(EventRate.confirmation_rate, 0) as confirmation_rate
+from Signups
+left join EventRate
+    on EventRate.user_id = Signups.user_id
+
+-- don't forget to round
+```
+
+---
+
+# 1251
+> date time, datetime, between, with, coalesce
+
+```sql
+-- https://leetcode.com/problems/average-selling-price
+with SoldPrice as (
+    select
+        UnitsSold.product_id,
+        Prices.price,
+        UnitsSold.units
+    from UnitsSold
+    join Prices
+        on Prices.product_id = UnitsSold.product_id
+        and UnitsSold.purchase_date 
+            between Prices.start_date 
+            and Prices.end_date
+),
+AveragePrice as (
+    select
+        SoldPrice.product_id,
+        round(
+            sum(cast(SoldPrice.price as float) * SoldPrice.units) / sum(SoldPrice.units),
+            2
+        )
+            as average_price
+    from SoldPrice
+    group by product_id
+),
+Products as (
+    select distinct
+        product_id
+    from Prices
+)
+select
+    Products.product_id,
+    coalesce(AveragePrice.average_price, 0.0) as average_price
+from Products
+left join AveragePrice
+    on AveragePrice.product_id = Products.product_id
+
+-- edge case, what if a product never sold? show as 0
+-- only one `with` needed for a chain of cte
 ```
