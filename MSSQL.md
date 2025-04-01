@@ -506,3 +506,107 @@ group by contest_id
 order by percentage desc, contest_id
 -- check order requirements
 ```
+
+---
+
+# 1211
+> avg, iif
+
+```sql
+-- https://leetcode.com/problems/queries-quality-and-percentage
+select
+    Queries.query_name,
+    round(
+        avg(1.0 * Queries.rating / Queries.position),
+        2
+    ) as quality,
+    round(
+        avg(iif(Queries.rating < 3, 100.0, 0.0)),
+        2
+    ) as poor_query_percentage
+from Queries
+group by Queries.query_name
+```
+
+---
+
+# 1193
+> date formate
+
+```sql
+-- https://leetcode.com/problems/monthly-transactions-i/
+select
+    format(Transactions.trans_date, 'yyyy-MM') as month,
+    Transactions.country as country,
+    count(1) as trans_count,
+    sum(iif(Transactions.state = 'approved', 1, 0)) as approved_count,
+    sum(Transactions.amount) as trans_total_amount,
+    sum(iif(Transactions.state = 'approved',Transactions.amount, 0)) as approved_total_amount
+from Transactions
+group by
+    format(Transactions.trans_date, 'yyyy-MM'),
+    Transactions.country
+
+-- not just month, but year-month
+```
+
+---
+
+# 1174
+> row number
+
+```sql
+-- https://leetcode.com/problems/immediate-food-delivery-ii/
+with FirstOrders as (
+    select
+        order_date,
+        customer_pref_delivery_date,
+        row_number() over(
+            partition by customer_id
+            order by order_date
+        ) as rownumber
+    from Delivery
+)
+select
+    round(
+        avg(iif(FirstOrders.order_date = customer_pref_delivery_date, 100.0, 0.0)),
+        2
+    ) as immediate_percentage
+from FirstOrders
+where rownumber = 1
+```
+
+---
+
+# 550
+> row number, variable, dateadd
+
+```sql
+-- https://leetcode.com/problems/game-play-analysis-iv
+declare @UserAmount INT
+;
+select @UserAmount = count(distinct player_id)
+from Activity
+;
+with SortedActivity as (
+    select
+        player_id,
+        event_date,
+        row_number() over(
+            partition by player_id
+            order by event_date
+        ) as rownumber
+    from Activity
+)
+select
+    round(
+        1.0 * count(1) / @UserAmount,
+        2
+    ) as fraction
+from SortedActivity as DayOne
+join SortedActivity as DayTwo
+    on DayTwo.player_id = DayOne.player_id
+    and DayOne.rownumber = 1
+    and DayTwo.rownumber = 2
+    and DayTwo.event_date = dateadd(day, 1, DayOne.event_date)
+```
