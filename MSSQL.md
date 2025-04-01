@@ -485,3 +485,24 @@ join Employee
 group by Project.project_id
 order by Project.project_id
 ```
+
+---
+
+# 1633
+> variable
+
+```sql
+-- https://leetcode.com/problems/percentage-of-users-attended-a-contest
+declare @UserAmount INT
+;
+select @UserAmount = count(1)
+from Users
+;
+select
+    contest_id,
+    round(100.0 * count(1) / @UserAmount, 2) as percentage
+from Register
+group by contest_id
+order by percentage desc, contest_id
+-- check order requirements
+```
