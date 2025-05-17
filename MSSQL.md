@@ -610,3 +610,34 @@ join SortedActivity as DayTwo
     and DayTwo.rownumber = 2
     and DayTwo.event_date = dateadd(day, 1, DayOne.event_date)
 ```
+
+---
+
+# 2356
+> count distinct
+
+```sql
+-- https://leetcode.com/problems/number-of-unique-subjects-taught-by-each-teacher
+select
+    teacher_id,
+    count(distinct subject_id) as cnt
+from Teacher
+group by teacher_id
+```
+
+---
+
+# 1141
+> dateadd, between and
+
+```sql
+-- https://leetcode.com/problems/user-activity-for-the-past-30-days-i
+select
+    activity_date as day,
+    count(distinct user_id) as active_users
+from Activity
+where activity_date between dateadd(day, -29, '2019-07-27') and '2019-07-27'
+group by activity_date
+
+-- between and will include ends
+```
